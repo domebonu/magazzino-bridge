@@ -87,10 +87,30 @@
       border-left: 1px solid #ddd;
       border-right: 1px solid #ddd;
     }
+    #notification {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4caf50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 9999;
+      transition: opacity 0.3s;
+    }
+    #notification.error {
+      background: #f44336;
+    }
   </style>
 </head>
 <body>
   <h1>📦 Magazzino Toner Itech Point</h1>
+
+  <div id="notification"></div>
 
   <div class="toolbar">
     <input type="text" id="search" placeholder="Cerca modello, codice o stampante...">
@@ -108,6 +128,18 @@
   <script>
     const bridgeURL = "https://magazzino-bridge.onrender.com/bridge.php";
     const updateURL = "https://script.google.com/macros/s/AKfycbydkAb5oBGLPXZYC9JZr5r3seN2tnlemosZKzT8jTr0nS-Z0g0RWCudFVLYnFjMdLAa/exec";
+
+    function showNotification(message, isError = false) {
+      const notif = document.getElementById("notification");
+      notif.textContent = message;
+      notif.className = isError ? "error" : "";
+      notif.style.display = "block";
+      notif.style.opacity = "1";
+      setTimeout(() => {
+        notif.style.opacity = "0";
+        setTimeout(() => notif.style.display = "none", 300);
+      }, 2500);
+    }
 
     async function loadData() {
       try {
@@ -193,9 +225,13 @@
           headers: { "Content-Type": "application/json" }
         });
         const text = await res.text();
-        if (text.trim() !== "OK") alert("⚠️ " + text);
+        if (text.trim() === "OK") {
+          showNotification("✅ Quantità aggiornata con successo");
+        } else {
+          showNotification("❌ " + text, true);
+        }
       } catch (err) {
-        alert("❌ Errore di connessione durante l'aggiornamento");
+        showNotification("❌ Errore di connessione", true);
       }
     }
 
