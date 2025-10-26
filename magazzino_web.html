@@ -127,7 +127,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
     const bridgeURL = "https://magazzino-bridge.onrender.com/bridge.php";
-    const updateURL = "https://script.google.com/macros/s/AKfycbydkAb5oBGLPXZYC9JZr5r3seN2tnlemosZKzT8jTr0nS-Z0g0RWCudFVLYnFjMdLAa/exec";
+    const updateURL = "https://script.google.com/macros/s/AKfycbw3Hf-yvtPAGKkoP6KDrVeAl3aEVr-SvJ18gD0bmkE/dev";
 
     function showNotification(message, isError = false) {
       const notif = document.getElementById("notification");
@@ -221,12 +221,16 @@
       try {
         const res = await fetch(updateURL, {
           method: "POST",
-          body: JSON.stringify({ codice, nuovaQuantita: qty }),
+          body: JSON.stringify({
+            codice,
+            nuovaQuantita: qty,
+            origin: window.location.hostname
+          }),
           headers: { "Content-Type": "application/json" }
         });
         const text = await res.text();
         if (text.trim() === "OK") {
-          showNotification("✅ Quantità aggiornata con successo");
+          showNotification(`✅ Quantità aggiornata per ${codice}`);
         } else {
           showNotification("❌ " + text, true);
         }

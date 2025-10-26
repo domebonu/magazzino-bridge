@@ -9,5 +9,5 @@ AGGIORNAMENTO FILE MAGAZZINO_WEB.HTML
 ✅ Dopo il deploy, ricarica la pagina:
    https://magazzino-bridge.onrender.com/magazzino_web.html
 
-Vedrai ora apparire un messaggio verde "✅ Quantità aggiornata con successo" 
-dopo ogni modifica quantità (o rosso in caso di errore).
+Da ora le modifiche quantità inviano il dominio di origine ('magazzino-bridge.onrender.com')
+e saranno accettate dallo script Google solo da lì.
