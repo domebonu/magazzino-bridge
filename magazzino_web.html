@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magazzino Toner Itech Point</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/679/679922.png">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      color: #222;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    input[type="text"] {
+      padding: 8px;
+      width: 260px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+    button {
+      padding: 8px 15px;
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #125ea6;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #1976d2;
+      color: #fff;
+      cursor: pointer;
+    }
+    tr:hover {
+      background: #f1f1f1;
+    }
+    .qty-controls {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      justify-content: center;
+    }
+    .qty-controls button {
+      background: #1565c0;
+      color: white;
+      font-size: 14px;
+      width: 25px;
+      height: 25px;
+      padding: 0;
+      border-radius: 50%;
+      font-weight: bold;
+      line-height: 1;
+    }
+    .highlight-code {
+      background-color: #fff8cc;
+      font-weight: 600;
+      border-left: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>📦 Magazzino Toner Itech Point</h1>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Cerca modello, codice o stampante...">
+    <button onclick="loadData()">🔄 Aggiorna dati</button>
+  </div>
+
+  <table id="data-table">
+    <thead>
+      <tr id="header-row"></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    const bridgeURL = "https://magazzino-bridge.onrender.com/bridge.php";
+    const updateURL = "https://script.google.com/macros/s/AKfycbydkAb5oBGLPXZYC9JZr5r3seN2tnlemosZKzT8jTr0nS-Z0g0RWCudFVLYnFjMdLAa/exec";
+
+    async function loadData() {
+      try {
+        const res = await fetch(bridgeURL);
+        if (!res.ok) throw new Error("Errore nel caricamento del file");
+        const blob = await res.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        renderTable(data);
+      } catch (err) {
+        document.querySelector("tbody").innerHTML = `<tr><td colspan='10' style='color:red;text-align:center;'>❌ Errore nel caricamento dati</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    function renderTable(data) {
+      const headerRow = document.getElementById("header-row");
+      const tbody = document.querySelector("tbody");
+      headerRow.innerHTML = "";
+      tbody.innerHTML = "";
+
+      const headers = data[0];
+      headers.forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headerRow.appendChild(th);
+      });
+
+      const qtyIndex = headers.indexOf("Quantità");
+      const codeIndex = headers.findIndex(h => h.toLowerCase().includes("codice articolo"));
+
+      data.slice(1).forEach(row => {
+        if (row.length === 0) return;
+        const tr = document.createElement("tr");
+        row.forEach((cell, i) => {
+          const td = document.createElement("td");
+
+          if (i === qtyIndex) {
+            td.innerHTML = `
+              <div class="qty-controls">
+                <button onclick="updateQty(this, -1)">-</button>
+                <span>${cell}</span>
+                <button onclick="updateQty(this, 1)">+</button>
+              </div>
+            `;
+          } else {
+            td.textContent = cell;
+          }
+          if (i === codeIndex) td.classList.add("highlight-code");
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.addEventListener("input", e => {
+      if (e.target.id === "search") filterTable();
+    });
+
+    function filterTable() {
+      const term = document.getElementById("search").value.toLowerCase();
+      const rows = document.querySelectorAll("#data-table tbody tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? "" : "none";
+      });
+    }
+
+    async function updateQty(button, delta) {
+      const row = button.closest("tr");
+      const codice = row.querySelector(".highlight-code").textContent.trim();
+      const span = button.parentElement.querySelector("span");
+      let qty = parseInt(span.textContent || 0);
+      qty = Math.max(0, qty + delta);
+      span.textContent = qty;
+
+      try {
+        const res = await fetch(updateURL, {
+          method: "POST",
+          body: JSON.stringify({ codice, nuovaQuantita: qty }),
+          headers: { "Content-Type": "application/json" }
+        });
+        const text = await res.text();
+        if (text.trim() !== "OK") alert("⚠️ " + text);
+      } catch (err) {
+        alert("❌ Errore di connessione durante l'aggiornamento");
+      }
+    }
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>
