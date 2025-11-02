@@ -80,18 +80,6 @@
     button:hover {
       background-color: #00337f;
     }
-    .qty-btn {
-      cursor: pointer;
-      background: #004aad;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      line-height: 22px;
-      text-align: center;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -144,33 +132,15 @@
 
         row.forEach((cell, index) => {
           const td = document.createElement("td");
-
           if (headers[index] === "Codice Articolo Fornitore") {
             td.classList.add("codice");
           }
-
-          if (headers[index] === "Quantità") {
-            td.innerHTML = `
-              <button class="qty-btn" onclick="adjustQuantity(this, -1)">−</button>
-              <span>${cell || 0}</span>
-              <button class="qty-btn" onclick="adjustQuantity(this, 1)">+</button>
-            `;
-          } else {
-            td.textContent = cell || "";
-          }
-
+          td.textContent = cell || "";
           tr.appendChild(td);
         });
 
         body.appendChild(tr);
       }
-    }
-
-    function adjustQuantity(btn, change) {
-      const span = btn.parentNode.querySelector("span");
-      let qty = parseInt(span.textContent) || 0;
-      qty = Math.max(0, qty + change);
-      span.textContent = qty;
     }
 
     function filterTable() {
