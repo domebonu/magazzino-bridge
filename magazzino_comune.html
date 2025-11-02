@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magazzino Comune</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2f5597;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.6em;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1em;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      background-color: #2f5597;
+      color: white;
+      padding: 10px;
+      text-align: left;
+    }
+    td {
+      border-bottom: 1px solid #ddd;
+      padding: 8px;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .codice {
+      background-color: #e8f0ff;
+      font-weight: bold;
+      color: #2f5597;
+      border-radius: 4px;
+      padding: 4px 8px;
+    }
+    .quantita {
+      text-align: center;
+    }
+    button {
+      background-color: #2f5597;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    button:hover {
+      background-color: #1d3a6e;
+    }
+    .status {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <header>Magazzino Comune</header>
+  <div class="container">
+    <input type="text" id="searchInput" placeholder="Cerca per codice, descrizione o fornitore..." onkeyup="filterTable()" />
+    <table id="magazzinoTable">
+      <thead>
+        <tr>
+          <th>Codice Articolo Fornitore</th>
+          <th>Descrizione</th>
+          <th>Quantità</th>
+          <th>Prezzo IVA inclusa</th>
+          <th>Fornitore</th>
+        </tr>
+      </thead>
+      <tbody id="magazzinoBody">
+        <tr><td colspan="5" style="text-align:center;">Caricamento dati...</td></tr>
+      </tbody>
+    </table>
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+  <script>
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDGfEF7jMqfHZFRzNLX2Is5wlFlyIIz6wG3P22ppAjnvPKd1pYi9AV4GkowxDucQFUZPDtSZqKBV5R/pub?output=xlsx";
+
+    async function fetchData() {
+      try {
+        const response = await fetch(sheetUrl);
+        const blob = await response.blob();
+        const data = await blob.arrayBuffer();
+
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        displayTable(jsonData);
+      } catch (error) {
+        document.getElementById("statusMsg").innerHTML = "❌ Errore nel caricamento dei dati.";
+        console.error("Errore:", error);
+      }
+    }
+
+    function displayTable(data) {
+      const tbody = document.getElementById("magazzinoBody");
+      tbody.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="codice">${row["Codice Articolo Fornitore"] || ""}</td>
+          <td>${row["Descrizione"] || ""}</td>
+          <td class="quantita">${row["Quantità"] || ""}</td>
+          <td>${row["Prezzo IVA inclusa"] || ""}</td>
+          <td>${row["Fornitore"] || ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterTable() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#magazzinoBody tr");
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+
+    fetchData();
+  </script>
+
+  <!-- Libreria XLSX per leggere file Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>
