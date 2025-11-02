@@ -4,164 +4,195 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Magazzino Comune</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/679/679922.png" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f7fb;
-      color: #333;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
       margin: 0;
-      padding: 0;
+      padding: 20px;
     }
-    header {
-      background-color: #2f5597;
-      color: white;
+    h1 {
+      color: #004aad;
       text-align: center;
-      padding: 20px;
-      font-size: 1.6em;
-      font-weight: bold;
-      letter-spacing: 0.5px;
+      margin-bottom: 5px;
     }
-    .container {
-      max-width: 1100px;
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    #searchInput {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1em;
-      margin-bottom: 20px;
+    h2 {
+      text-align: center;
+      color: #666;
+      margin-top: 0;
+      font-weight: normal;
     }
     table {
-      width: 100%;
       border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    th {
-      background-color: #2f5597;
-      color: white;
+    th, td {
       padding: 10px;
+      border: 1px solid #ddd;
       text-align: left;
     }
-    td {
-      border-bottom: 1px solid #ddd;
-      padding: 8px;
+    th {
+      background: #004aad;
+      color: white;
+      font-size: 14px;
     }
-    tr:hover {
-      background-color: #f1f1f1;
+    td {
+      font-size: 13px;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
     }
     .codice {
-      background-color: #e8f0ff;
+      background: #fff6cc;
       font-weight: bold;
-      color: #2f5597;
-      border-radius: 4px;
-      padding: 4px 8px;
     }
-    .quantita {
-      text-align: center;
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .search-box {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    input[type="text"] {
+      width: 60%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
     }
     button {
-      background-color: #2f5597;
+      margin-left: 10px;
+      padding: 10px 15px;
+      background-color: #004aad;
       color: white;
       border: none;
-      padding: 4px 10px;
-      border-radius: 4px;
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 0.9em;
     }
     button:hover {
-      background-color: #1d3a6e;
+      background-color: #00337f;
     }
-    .status {
-      margin-top: 15px;
+    .qty-btn {
+      cursor: pointer;
+      background: #004aad;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
       text-align: center;
       font-weight: bold;
-    }
-    .success {
-      color: green;
-    }
-    .error {
-      color: red;
     }
   </style>
 </head>
 <body>
-  <header>Magazzino Comune</header>
   <div class="container">
-    <input type="text" id="searchInput" placeholder="Cerca per codice, descrizione o fornitore..." onkeyup="filterTable()" />
-    <table id="magazzinoTable">
-      <thead>
-        <tr>
-          <th>Codice Articolo Fornitore</th>
-          <th>Descrizione</th>
-          <th>Quantità</th>
-          <th>Prezzo IVA inclusa</th>
-          <th>Fornitore</th>
-        </tr>
-      </thead>
-      <tbody id="magazzinoBody">
-        <tr><td colspan="5" style="text-align:center;">Caricamento dati...</td></tr>
-      </tbody>
+    <h1>📦 Magazzino Comune</h1>
+    <h2>Itech Point</h2>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Cerca modello, codice o stampante..." onkeyup="filterTable()" />
+      <button onclick="loadData()">🔄 Aggiorna dati</button>
+    </div>
+
+    <table id="dataTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
     </table>
-    <div class="status" id="statusMsg"></div>
   </div>
 
   <script>
     const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDGfEF7jMqfHZFRzNLX2Is5wlFlyIIz6wG3P22ppAjnvPKd1pYi9AV4GkowxDucQFUZPDtSZqKBV5R/pub?output=xlsx";
 
-    async function fetchData() {
-      try {
-        const response = await fetch(sheetUrl);
-        const blob = await response.blob();
-        const data = await blob.arrayBuffer();
+    async function loadData() {
+      const response = await fetch(sheetUrl);
+      const blob = await response.blob();
+      const data = await blob.arrayBuffer();
 
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
 
-        displayTable(jsonData);
-      } catch (error) {
-        document.getElementById("statusMsg").innerHTML = "❌ Errore nel caricamento dei dati.";
-        console.error("Errore:", error);
+      const head = document.getElementById("tableHead");
+      const body = document.getElementById("tableBody");
+      head.innerHTML = "";
+      body.innerHTML = "";
+
+      if (sheet.length === 0) return;
+
+      const headers = sheet[0];
+      const headerRow = document.createElement("tr");
+      headers.forEach(header => {
+        const th = document.createElement("th");
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+      head.appendChild(headerRow);
+
+      for (let i = 1; i < sheet.length; i++) {
+        const row = sheet[i];
+        const tr = document.createElement("tr");
+
+        row.forEach((cell, index) => {
+          const td = document.createElement("td");
+
+          if (headers[index] === "Codice Articolo Fornitore") {
+            td.classList.add("codice");
+          }
+
+          if (headers[index] === "Quantità") {
+            td.innerHTML = `
+              <button class="qty-btn" onclick="adjustQuantity(this, -1)">−</button>
+              <span>${cell || 0}</span>
+              <button class="qty-btn" onclick="adjustQuantity(this, 1)">+</button>
+            `;
+          } else {
+            td.textContent = cell || "";
+          }
+
+          tr.appendChild(td);
+        });
+
+        body.appendChild(tr);
       }
     }
 
-    function displayTable(data) {
-      const tbody = document.getElementById("magazzinoBody");
-      tbody.innerHTML = "";
-
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="codice">${row["Codice Articolo Fornitore"] || ""}</td>
-          <td>${row["Descrizione"] || ""}</td>
-          <td class="quantita">${row["Quantità"] || ""}</td>
-          <td>${row["Prezzo IVA inclusa"] || ""}</td>
-          <td>${row["Fornitore"] || ""}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function adjustQuantity(btn, change) {
+      const span = btn.parentNode.querySelector("span");
+      let qty = parseInt(span.textContent) || 0;
+      qty = Math.max(0, qty + change);
+      span.textContent = qty;
     }
 
     function filterTable() {
-      const input = document.getElementById("searchInput").value.toLowerCase();
-      const rows = document.querySelectorAll("#magazzinoBody tr");
+      const filter = document.getElementById("searchInput").value.toUpperCase();
+      const rows = document.querySelector("#dataTable tbody").rows;
 
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(input) ? "" : "none";
-      });
+      for (let i = 0; i < rows.length; i++) {
+        let visible = false;
+        const cells = rows[i].cells;
+        for (let j = 0; j < cells.length; j++) {
+          const txt = cells[j].textContent || cells[j].innerText;
+          if (txt.toUpperCase().indexOf(filter) > -1) {
+            visible = true;
+            break;
+          }
+        }
+        rows[i].style.display = visible ? "" : "none";
+      }
     }
 
-    fetchData();
+    loadData();
   </script>
-
-  <!-- Libreria XLSX per leggere file Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
 </html>
