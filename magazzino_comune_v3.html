@@ -116,8 +116,10 @@
   </table>
 
   <script>
-    const dataURL = "https://script.google.com/macros/s/AKfycbykIlZcpJZTGjaSFO4k03p6VfJjBnzkWWYtYGSYEs_l6OCElvKtNx061FTYfmvKyJVN/exec";
+    // ✅ URL corretto della tua Web App Google (Nov 2025)
+    const dataURL = "https://script.google.com/macros/s/AKfycbwZyEGFXKhbc_prsEfHQ_wa1wHPb1BBJyvdimbBnDVjT-9fw1xv8Cv800KztBNo9gQ8AQ/exec";
 
+    // 🔔 Messaggi di notifica (successo / errore)
     function showNotification(message, isError = false) {
       const notif = document.getElementById("notification");
       notif.textContent = message;
@@ -130,6 +132,7 @@
       }, 2500);
     }
 
+    // 📦 Caricamento dati dal foglio Google
     async function loadData() {
       try {
         const res = await fetch(`${dataURL}?nocache=${Date.now()}`, { cache: "no-store" });
@@ -147,6 +150,7 @@
       }
     }
 
+    // 🧩 Renderizza la tabella con i dati JSON
     function renderTableFromJSON(data) {
       const headerRow = document.getElementById("header-row");
       const tbody = document.querySelector("tbody");
@@ -177,6 +181,7 @@
       });
     }
 
+    // 🔍 Ricerca istantanea
     document.addEventListener("input", e => {
       if (e.target.id === "search") filterTable();
     });
@@ -190,7 +195,7 @@
       });
     }
 
-    // 🔄 Auto-refresh ogni 2 minuti
+    // 🔄 Carica i dati iniziali e aggiorna ogni 2 minuti
     loadData();
     setInterval(loadData, 120000);
   </script>
