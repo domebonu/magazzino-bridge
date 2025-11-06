@@ -124,9 +124,9 @@
     <tbody></tbody>
   </table>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
-    const bridgeURL = "https://magazzino-bridge.onrender.com/bridge.php";
+    // ✅ URL diretto della tua Web App (non più PHP)
+    const dataURL = "https://script.google.com/macros/s/AKfycbyzpfvbtxMGR7FaiR9Tfl4J_excAqV6gJlRsb1tE2RiGXpfuxpnqje_lYSOvA58egNO/exec";
     const updateURL = "https://script.google.com/macros/s/AKfycbw3Hf-yvtPAGKkoP6KDrVeAl3aEVr-SvJ18gD0bmkE/dev";
 
     function showNotification(message, isError = false) {
@@ -143,54 +143,50 @@
 
     async function loadData() {
       try {
-        const res = await fetch(bridgeURL);
-        if (!res.ok) throw new Error("Errore nel caricamento del file");
-        const blob = await res.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        renderTable(data);
+        const res = await fetch(`${dataURL}?nocache=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Errore nel caricamento dati");
+        const data = await res.json();
+        renderTableFromJSON(data);
       } catch (err) {
         document.querySelector("tbody").innerHTML = `<tr><td colspan='10' style='color:red;text-align:center;'>❌ Errore nel caricamento dati</td></tr>`;
         console.error(err);
       }
     }
 
-    function renderTable(data) {
+    function renderTableFromJSON(data) {
       const headerRow = document.getElementById("header-row");
       const tbody = document.querySelector("tbody");
       headerRow.innerHTML = "";
       tbody.innerHTML = "";
 
-      const headers = data[0];
+      if (!Array.isArray(data) || !data.length) {
+        tbody.innerHTML = `<tr><td colspan='10' style='text-align:center;'>Nessun dato disponibile</td></tr>`;
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
       headers.forEach(h => {
         const th = document.createElement("th");
         th.textContent = h;
         headerRow.appendChild(th);
       });
 
-      const qtyIndex = headers.indexOf("Quantità");
-      const codeIndex = headers.findIndex(h => h.toLowerCase().includes("codice articolo"));
-
-      data.slice(1).forEach(row => {
-        if (row.length === 0) return;
+      data.forEach(row => {
         const tr = document.createElement("tr");
-        row.forEach((cell, i) => {
+        headers.forEach(h => {
           const td = document.createElement("td");
-
-          if (i === qtyIndex) {
+          if (h.toLowerCase().includes("quantità")) {
             td.innerHTML = `
               <div class="qty-controls">
                 <button onclick="updateQty(this, -1)">-</button>
-                <span>${cell}</span>
+                <span>${row[h]}</span>
                 <button onclick="updateQty(this, 1)">+</button>
               </div>
             `;
           } else {
-            td.textContent = cell;
+            td.textContent = row[h] ?? "";
           }
-          if (i === codeIndex) td.classList.add("highlight-code");
+          if (h.toLowerCase().includes("codice articolo")) td.classList.add("highlight-code");
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
